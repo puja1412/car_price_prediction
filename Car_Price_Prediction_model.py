@@ -45,7 +45,7 @@ import os
 # In[52]:
 
 
-data=pd.read_csv("car data.csv")
+data=pd.read_csv("C:/Users/lenovo/Desktop/car data.csv")
 data.head(10)
 
 
@@ -128,8 +128,6 @@ x=data.drop(["Selling_Price_of_Car","Car_Name"],axis=1)
 
 
 # In[60]:
-print('x_data')
-print(x.columns)
 
 
 #Spliting data to train and test sizes.
@@ -197,6 +195,86 @@ lr = LinearRegression()
 model(lr,x_train,y_train,x_test,y_test)
 
 
+# # 2. Lasso
+# 
+# Before applying Lasso model, I am going to assign a alpha range that effect model and choose the best estimator for model.
+
+# In[64]:
+
+
+from sklearn.linear_model import Lasso
+from sklearn.model_selection import GridSearchCV
+
+alphas = np.logspace(-3,3,num=14) # range for alpha
+
+grid = GridSearchCV(estimator=Lasso(), param_grid=dict(alpha=alphas))
+grid.fit(x_train, y_train)
+
+print(grid.best_score_)
+print(grid.best_estimator_.alpha)
+
+
+# In[65]:
+
+
+ls = Lasso(alpha = grid.best_estimator_.alpha, normalize = True) # applied the best estimator
+model(ls,x_train,y_train,x_test,y_test)
+
+
+# # 3. Ridge
+# 
+# We are going to do same operation for Ridge
+
+# In[66]:
+
+
+from sklearn.linear_model import Ridge
+
+alphas = np.logspace(-3,3,num=14) # range for alpha
+
+grid2 = GridSearchCV(estimator=Ridge(), param_grid=dict(alpha=alphas)) 
+grid2.fit(x_train, y_train)
+
+print(grid2.best_score_)
+print(grid2.best_estimator_.alpha)
+
+
+# In[67]:
+
+
+ridge = Ridge(alpha = 0.01, normalize = True) # applied the best estimator
+model(ridge,x_train,y_train,x_test,y_test)
+
+
+# # 4. Decision Tree Regressor
+
+# In[68]:
+
+
+from sklearn.tree import DecisionTreeRegressor
+dtr = DecisionTreeRegressor()
+model(dtr,x_train,y_train,x_test,y_test)
+
+
+# # 5. Random Forest Regressor
+
+# In[69]:
+
+
+from sklearn.ensemble import RandomForestRegressor
+rf = RandomForestRegressor(n_estimators = 100, random_state = 42)
+model(rf,x_train,y_train,x_test,y_test)
+
+
+# In[70]:
+
+
+#Lets see the results together in dataframe
+
+Model = ["LinearRegression","Lasso","Ridge","DecisionTreeRegressor","RandomForestRegressor"]
+results=pd.DataFrame({'Model': Model,'R Squared': r_2,'CV score mean': CV})
+results
+
 
 # # 5. CONCLUSION
 # 
@@ -209,8 +287,14 @@ import pickle
 
 # save the model to disk
 filename = 'Car_Price_Prediction_model'
-pickle.dump(lr, open(filename, 'wb'))
-
+pickle.dump(model, open(filename, 'wb'))
+ 
+# some time later...
+ 
+# load the model from disk
+loaded_model = pickle.load(open(filename, 'rb'))
+result = loaded_model.score(x_test, y_test)
+print(result)
 
 
 # In[ ]:
